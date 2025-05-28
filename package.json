@@ -3,10 +3,10 @@
   "displayName": "Structure Copy",
   "description": "copy file and folder with thier structure for GPT input",
   "version": "0.0.1",
-  "publisher": "shengping-yang",
+  "publisher": "igeryoung",
   "repository": {
     "type": "git",
-    "url": "https://github.com/shengping-yang/structure-copy.git"
+    "url": "https://github.com/igeryoung/StructureCopy"
   },
   "engines": {
     "vscode": "^1.100.0"
