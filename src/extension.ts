@@ -4,6 +4,36 @@ const { Uri, FileType } = vscode;
 export function activate(context: vscode.ExtensionContext) {
   context.subscriptions.push(
     vscode.commands.registerCommand(
+      'copyByExtension.copy',
+      async (uri: vscode.Uri, selectedUris?: vscode.Uri[]) => {
+        const uris = Array.isArray(selectedUris) && selectedUris.length
+          ? selectedUris
+          : [uri];
+
+        const files: vscode.Uri[] = [];
+        for (const u of uris) {
+          try {
+            const stat = await vscode.workspace.fs.stat(u);
+            if (stat.type === FileType.File) {
+              files.push(u);
+            }
+          } catch {
+            // ignore any stat errors
+          }
+        }
+
+        if (files.length === 0) {
+          vscode.window.showWarningMessage('No files selected to copy.');
+          return;
+        }
+
+        await copyFiles(files);
+      }
+    )
+  );
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand(
       'copyByExtension.copyPlain',
       async (contextUri: vscode.Uri, selectedUris?: vscode.Uri[]) => {
         const candidates = Array.isArray(selectedUris) && selectedUris.length

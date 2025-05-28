@@ -14,7 +14,11 @@
   "categories": [
     "Other"
   ],
-  "activationEvents": [],
+  "activationEvents": [
+    "onCommand:copyByExtension.copy",
+    "onCommand:copyByExtension.copyPlain",
+    "onCommand:copyByExtension.copyRecursive"
+  ],
   "main": "./out/extension.js",
   "contributes": {
     "commands": [

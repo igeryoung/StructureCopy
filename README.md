@@ -1,71 +1,36 @@
-# smartcopy README
+<!-- README.md -->
 
-This is the README for your extension "smartcopy". After writing up a brief description, we recommend including the following sections.
+# Structure Copy
+
+A VS Code extension that lets you select files or folders from the Explorer, right-click, and copy their contents (with file-path headers) straight to your clipboard—either a flat list (plain) or recursive through subfolders.
+
+## Standard Format
+
+```text
+==== {path/to/file1} ====
+{file1 contents}
+
+==== {path/to/file2} ====
+{file2 contents}
+```
 
 ## Features
 
-Describe specific features of your extension including screenshots of your extension in action. Image paths are relative to this README file.
+- **Copy File(s)**  
+  Select one or more files → right-click **Structure Copy** → concatenates each file’s contents (prefixed by `==== path/to/file ====`) into your clipboard.
 
-For example if there is an image subfolder under your extension project workspace:
+- **Copy Plain Folder**  
+  Select one or more folders → right-click **Structure Copy Folder** → copies only the files immediately under each folder.
 
-\!\[feature X\]\(images/feature-x.png\)
+- **Copy Recursive Folder**  
+  Select one or more folders → right-click **Structure Copy Folder Recursive** → walks every subfolder and copies all files.
 
-> Tip: Many popular extensions utilize animations. This is an excellent way to show off your extension! We recommend short, focused animations that are easy to follow.
+## Installation
 
-## Requirements
+1. **From the Marketplace**  
+   Install “Structure Copy” directly in VS Code
 
-If you have any requirements or dependencies, add a section describing those and how to install and configure them.
-
-## Extension Settings
-
-Include if your extension adds any VS Code settings through the `contributes.configuration` extension point.
-
-For example:
-
-This extension contributes the following settings:
-
-* `myExtension.enable`: Enable/disable this extension.
-* `myExtension.thing`: Set to `blah` to do something.
-
-## Known Issues
-
-Calling out known issues can help limit users opening duplicate issues against your extension.
-
-## Release Notes
-
-Users appreciate release notes as you update your extension.
-
-### 1.0.0
-
-Initial release of ...
-
-### 1.0.1
-
-Fixed issue #.
-
-### 1.1.0
-
-Added features X, Y, and Z.
-
----
-
-## Following extension guidelines
-
-Ensure that you've read through the extensions guidelines and follow the best practices for creating your extension.
-
-* [Extension Guidelines](https://code.visualstudio.com/api/references/extension-guidelines)
-
-## Working with Markdown
-
-You can author your README using Visual Studio Code. Here are some useful editor keyboard shortcuts:
-
-* Split the editor (`Cmd+\` on macOS or `Ctrl+\` on Windows and Linux).
-* Toggle preview (`Shift+Cmd+V` on macOS or `Shift+Ctrl+V` on Windows and Linux).
-* Press `Ctrl+Space` (Windows, Linux, macOS) to see a list of Markdown snippets.
-
-## For more information
-
-* [Visual Studio Code's Markdown Support](http://code.visualstudio.com/docs/languages/markdown)
-* [Markdown Syntax Reference](https://help.github.com/articles/markdown-basics/)
-
-**Enjoy!**
+2. **Side-load the VSIX**  
+   ```bash
+   # after building your .vsix
+   code --install-extension structure-copy-0.0.1.vsix
