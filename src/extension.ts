@@ -1,24 +1,54 @@
 import * as vscode from 'vscode';
-const { Uri, FileType } = vscode;
+import ignore from 'ignore';
 
-export function activate(context: vscode.ExtensionContext) {
+const { Uri, FileType } = vscode;
+let ig = ignore();
+
+// Load .gitignore patterns from workspace root
+eventually
+async function loadGitignore() {
+  const ws = vscode.workspace.workspaceFolders?.[0];
+  if (!ws) {
+    return;
+  }
+  const gitignoreUri = Uri.joinPath(ws.uri, '.gitignore');
+  try {
+    const data = await vscode.workspace.fs.readFile(gitignoreUri);
+    const content = new TextDecoder('utf-8').decode(data);
+    ig = ignore().add(content.split(/\r?\n/));
+  } catch {
+    ig = ignore();
+  }
+}
+
+// Check if a URI should be ignored based on .gitignore
+function shouldIgnore(uri: Uri): boolean {
+  const relPath = vscode.workspace.asRelativePath(uri, false);
+  return ig.ignores(relPath);
+}
+
+export async function activate(context: vscode.ExtensionContext) {
+  await loadGitignore();
+
+  // Copy selected file(s), skipping ignored
   context.subscriptions.push(
     vscode.commands.registerCommand(
       'copyByExtension.copy',
-      async (uri: vscode.Uri, selectedUris?: vscode.Uri[]) => {
+      async (contextUri: Uri, selectedUris?: Uri[]) => {
         const uris = Array.isArray(selectedUris) && selectedUris.length
           ? selectedUris
-          : [uri];
+          : [contextUri];
 
-        const files: vscode.Uri[] = [];
+        // Filter out directories and ignored files
+        const files: Uri[] = [];
         for (const u of uris) {
           try {
             const stat = await vscode.workspace.fs.stat(u);
-            if (stat.type === FileType.File) {
+            if (stat.type === FileType.File && !shouldIgnore(u)) {
               files.push(u);
             }
           } catch {
-            // ignore any stat errors
+            // ignore errors
           }
         }
 
@@ -32,15 +62,16 @@ export function activate(context: vscode.ExtensionContext) {
     )
   );
 
+  // Copy plain folder
   context.subscriptions.push(
     vscode.commands.registerCommand(
       'copyByExtension.copyPlain',
-      async (contextUri: vscode.Uri, selectedUris?: vscode.Uri[]) => {
+      async (contextUri: Uri, selectedUris?: Uri[]) => {
         const candidates = Array.isArray(selectedUris) && selectedUris.length
           ? selectedUris
           : [contextUri];
         const folders = await filterFolders(candidates);
-        let allFiles: vscode.Uri[] = [];
+        let allFiles: Uri[] = [];
         for (const folder of folders) {
           allFiles.push(...await scanFiles(folder, /*recursive=*/ false));
         }
@@ -49,15 +80,16 @@ export function activate(context: vscode.ExtensionContext) {
     )
   );
 
+  // Copy recursive folder
   context.subscriptions.push(
     vscode.commands.registerCommand(
       'copyByExtension.copyRecursive',
-      async (contextUri: vscode.Uri, selectedUris?: vscode.Uri[]) => {
+      async (contextUri: Uri, selectedUris?: Uri[]) => {
         const candidates = Array.isArray(selectedUris) && selectedUris.length
           ? selectedUris
           : [contextUri];
         const folders = await filterFolders(candidates);
-        let allFiles: vscode.Uri[] = [];
+        let allFiles: Uri[] = [];
         for (const folder of folders) {
           allFiles.push(...await scanFiles(folder, /*recursive=*/ true));
         }
@@ -67,37 +99,45 @@ export function activate(context: vscode.ExtensionContext) {
   );
 }
 
-async function filterFolders(uris: vscode.Uri[]): Promise<vscode.Uri[]> {
-  const folders: vscode.Uri[] = [];
+// Filter URIs to return only directories (not ignored)
+async function filterFolders(uris: Uri[]): Promise<Uri[]> {
+  const folders: Uri[] = [];
   for (const uri of uris) {
     try {
       const stat = await vscode.workspace.fs.stat(uri);
-      if (stat.type === FileType.Directory) {
+      if (stat.type === FileType.Directory && !shouldIgnore(uri)) {
         folders.push(uri);
       }
     } catch {
+      // ignore
     }
   }
   return folders;
 }
 
-async function scanFiles(folder: vscode.Uri, recursive: boolean): Promise<vscode.Uri[]> {
+// Scan files under a folder, skipping ignored and optionally recursing
+async function scanFiles(folder: Uri, recursive: boolean): Promise<Uri[]> {
   const entries = await vscode.workspace.fs.readDirectory(folder);
-  let results: vscode.Uri[] = [];
+  let results: Uri[] = [];
 
   for (const [name, type] of entries) {
     const entry = Uri.joinPath(folder, name);
     if (type === FileType.File) {
-      results.push(entry);
+      if (!shouldIgnore(entry)) {
+        results.push(entry);
+      }
     } else if (recursive && type === FileType.Directory) {
-      results.push(...await scanFiles(entry, true));
+      if (!shouldIgnore(entry)) {
+        results.push(...await scanFiles(entry, true));
+      }
     }
   }
 
   return results;
 }
 
-async function copyFiles(uris: vscode.Uri[]) {
+// Copy contents of given URIs to clipboard
+async function copyFiles(uris: Uri[]) {
   const decoder = new TextDecoder('utf-8');
   let output = '';
 
@@ -112,13 +152,13 @@ async function copyFiles(uris: vscode.Uri[]) {
     }
   }
 
-  if (output === '') {
+  if (!output) {
     vscode.window.showWarningMessage('No files found to copy.');
     return;
   }
 
   await vscode.env.clipboard.writeText(output);
-  vscode.window.showInformationMessage(`Copied contents of ${uris.length} file(s).`);
+  vscode.window.showInformationMessage(`Copied contents of ${uris.length} item(s).`);
 }
 
 export function deactivate() {}

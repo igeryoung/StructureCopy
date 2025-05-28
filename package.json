@@ -2,8 +2,9 @@
   "name": "structure-copy",
   "displayName": "Structure Copy",
   "description": "copy file and folder with thier structure for GPT input",
-  "version": "0.0.1",
-  "publisher": "igeryoung",
+  "version": "0.0.2",
+  "publisher": "ShengPingYang",
+  "icon": "assets/icon.png",
   "repository": {
     "type": "git",
     "url": "https://github.com/igeryoung/StructureCopy"
